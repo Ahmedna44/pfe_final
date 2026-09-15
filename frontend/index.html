@@ -1,0 +1,414 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>IDS SHIELD - Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #attackPopup {
+      position: fixed;
+      top: 80px;
+      right: 30px;
+      width: 380px;
+      background: linear-gradient(135deg, #2a0e0e 0%, #1a0808 100%);
+      border: 2px solid #ff4757;
+      border-radius: 12px;
+      box-shadow: 0 0 40px rgba(255, 71, 87, 0.6), 0 0 80px rgba(255, 71, 87, 0.3);
+      z-index: 9999;
+      transform: translateX(450px);
+      transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      animation: popupShake 0.5s ease;
+    }
+    #attackPopup.show {
+      transform: translateX(0);
+      animation: popupShake 0.5s ease, popupPulse 1s ease infinite;
+    }
+    @keyframes popupShake {
+      0%, 100% { transform: translateX(0) rotate(0); }
+      25% { transform: translateX(-8px) rotate(-1deg); }
+      75% { transform: translateX(8px) rotate(1deg); }
+    }
+    @keyframes popupPulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(255, 71, 87, 0.6); }
+      50% { box-shadow: 0 0 60px rgba(255, 71, 87, 0.9), 0 0 100px rgba(255, 71, 87, 0.5); }
+    }
+    .popup-content { padding: 0; }
+    .popup-header {
+      background: #ff4757;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+    }
+    .popup-icon { font-size: 24px; animation: iconBlink 0.6s ease infinite; }
+    @keyframes iconBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .popup-title { flex: 1; font-size: 16px; letter-spacing: 1px; }
+    .popup-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .popup-close:hover { background: rgba(255, 255, 255, 0.4); }
+    .popup-body {
+      padding: 16px 20px;
+      color: #e0e6f0;
+    }
+    .popup-row {
+      padding: 6px 0;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 71, 87, 0.2);
+    }
+    .popup-row:last-child { border-bottom: none; }
+    .popup-row strong { color: #ff8a95; }
+    .popup-row code { color: #00d4ff; background: rgba(0, 212, 255, 0.1); padding: 2px 8px; border-radius: 4px; }
+    .popup-footer {
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #6b7a99;
+      font-size: 11px;
+      text-align: center;
+      border-radius: 0 0 10px 10px;
+    }
+ 
+    .arch-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 30px;
+      align-items: stretch;
+      margin: 30px 0;
+    }
+    .arch-box {
+      background: linear-gradient(135deg, #11182c 0%, #1a2440 100%);
+      border: 2px solid #00d4ff;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0, 212, 255, 0.15);
+    }
+    .arch-box h3 {
+      color: #00d4ff;
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .arch-step {
+      background: rgba(0, 212, 255, 0.05);
+      border-left: 3px solid #00d4ff;
+      padding: 8px 12px;
+      margin: 8px 0;
+      font-size: 13px;
+      color: #e0e6f0;
+      border-radius: 4px;
+    }
+    .arch-step strong { color: #00d4ff; }
+    .arch-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #00d4ff;
+      font-weight: bold;
+    }
+    .arch-arrow .arrow-line {
+      width: 80px;
+      height: 2px;
+      background: #00d4ff;
+      position: relative;
+    }
+    .arch-arrow .arrow-line::after {
+      content: "▶";
+      position: absolute;
+      right: -12px;
+      top: -10px;
+      color: #00d4ff;
+      font-size: 16px;
+    }
+    .arch-arrow-back .arrow-line::before {
+      content: "◀";
+      position: absolute;
+      left: -12px;
+      top: -10px;
+      color: #2ecc71;
+      font-size: 16px;
+    }
+    .arch-arrow-back .arrow-line { background: #2ecc71; }
+    .arch-arrow span {
+      font-size: 11px;
+      margin: 5px 0;
+      letter-spacing: 0.5px;
+    }
+    .arch-down {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px 0;
+    }
+    .arch-down-arrow {
+      color: #00d4ff;
+      font-size: 24px;
+      animation: bounce 1.5s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(8px); }
+    }
+    .arch-dashboard-box {
+      background: linear-gradient(135deg, #1a2440 0%, #2d1a40 100%);
+      border: 2px solid #9b59b6;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 400px;
+      margin: 0 auto;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(155, 89, 182, 0.2);
+    }
+    .arch-dashboard-box h3 { color: #9b59b6; margin: 0 0 8px 0; }
+ 
+    @media (max-width: 768px) {
+      .arch-flow { grid-template-columns: 1fr; }
+      .arch-arrow { transform: rotate(90deg); margin: 15px 0; }
+    }
+  </style>
+</head>
+<body>
+ 
+<div id="attackPopup"></div>
+ 
+<header>
+  <div class="logo">🛡️ IDS SHIELD</div>
+  <div id="backendStatus" class="status">● BACKEND EN LIGNE</div>
+  <div class="user-info">
+    <span id="userName"></span>
+    <span class="badge-admin" id="userRole">ADMIN</span>
+    <button class="btn-logout" onclick="logout()">Déconnexion</button>
+  </div>
+</header>
+ 
+<nav>
+  <button class="tab active" data-tab="dashboard">📊 Dashboard</button>
+  <button class="tab" data-tab="analyse">🔍 Analyse</button>
+  <button class="tab" data-tab="historique">📋 Historique</button>
+  <button class="tab" data-tab="profils">👥 Profils</button>
+</nav>
+ 
+<div id="notifs"></div>
+ 
+<main>
+ 
+<section id="dashboard" class="page active">
+ 
+  <div class="stats-grid">
+    <div class="stat-card purple">
+      <div class="stat-label">TOTAL DÉTECTIONS</div>
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-sub">Logs reçus du client</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">TRAFIC NORMAL</div>
+      <div class="stat-value" id="statNormal">0</div>
+      <div class="stat-sub" id="statNormalPct">0%</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">ATTAQUES DÉTECTÉES</div>
+      <div class="stat-value" id="statAttacks">0</div>
+      <div class="stat-sub" id="statAttacksPct">0%</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">TAUX D'ATTAQUE</div>
+      <div class="stat-value" id="statRate">0%</div>
+      <div class="stat-sub">Sur tous les logs</div>
+    </div>
+  </div>
+ 
+  <div class="grid-2">
+    <div class="card">
+      <h3>Répartition Normal vs Attaques</h3>
+      <canvas id="pieChart" width="300" height="220"></canvas>
+      <div id="pieLegend"></div>
+    </div>
+    <div class="card">
+      <h3>🚨 Attaques par famille</h3>
+      <div id="familyBars"></div>
+    </div>
+  </div>
+ 
+  <div class="grid-2">
+    <div class="card">
+      <h3>🌐 Protocoles utilisés</h3>
+      <div id="protoList"></div>
+    </div>
+    <div class="card">
+      <h3>Top 5 services</h3>
+      <div id="serviceList"></div>
+    </div>
+  </div>
+ 
+  <div class="card">
+    <h3>10 dernières détections</h3>
+    <div class="table-wrap">
+      <table class="mini-table">
+        <thead>
+          <tr><th>HEURE</th><th>DÉTECTION</th><th>TYPE</th><th>PROTOCOL</th></tr>
+        </thead>
+        <tbody id="recentDetections"></tbody>
+      </table>
+    </div>
+  </div>
+ 
+</section>
+ 
+<section id="analyse" class="page">
+ 
+  <div class="card">
+    <h3>🔍 Simulation rapide d'attaques</h3>
+ 
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="chip normal" onclick="simulateAttack('normal')">Trafic Normal</button>
+      <button class="chip dos" onclick="simulateAttack('dos')">🚨 Simuler DoS</button>
+      <button class="chip probe" onclick="simulateAttack('probe')">🚨 Simuler Probe</button>
+      <button class="chip r2l" onclick="simulateAttack('r2l')">🚨 Simuler R2L</button>
+      <button class="chip u2r" onclick="simulateAttack('u2r')">🚨 Simuler U2R</button>
+    </div>
+ 
+    <h4 style="margin-top:20px">Terminal</h4>
+    <div class="term-header">
+      <span class="subtitle">Logs des envois client -> serveur</span>
+      <button class="btn-mini" onclick="clearTerminal()">Effacer</button>
+    </div>
+    <div id="terminal">Lance une simulation...
+</div>
+  </div>
+ 
+  <div class="card" style="margin-top:20px">
+    <h3>Analyse manuelle d'une connexion</h3>
+ 
+    <div class="form-grid">
+      <label>DURATION
+        <input type="number" id="f_duration" value="0">
+      </label>
+      <label>PROTOCOL TYPE
+        <select id="f_protocol_type">
+          <option value="tcp">tcp</option>
+          <option value="udp">udp</option>
+          <option value="icmp">icmp</option>
+        </select>
+      </label>
+      <label>SERVICE
+        <input id="f_service" value="http">
+      </label>
+      <label>FLAG
+        <select id="f_flag">
+          <option value="SF">SF</option>
+          <option value="S0">S0</option>
+          <option value="REJ">REJ</option>
+          <option value="RSTR">RSTR</option>
+        </select>
+      </label>
+      <label>SRC BYTES
+        <input type="number" id="f_src_bytes" value="491">
+      </label>
+      <label>DST BYTES
+        <input type="number" id="f_dst_bytes" value="0">
+      </label>
+      <label>COUNT
+        <input type="number" id="f_count" value="2">
+      </label>
+      <label>SRV COUNT
+        <input type="number" id="f_srv_count" value="2">
+      </label>
+      <label>SERROR RATE
+        <input type="number" id="f_serror_rate" value="0" step="0.1">
+      </label>
+    </div>
+ 
+    <button class="btn-primary" onclick="analyseManual()">Envoyer au serveur</button>
+  </div>
+ 
+</section>
+ 
+<section id="historique" class="page">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>📋 Historique des détections</h3>
+      <button class="btn-danger" onclick="resetHistory()">🗑️ Vider l'historique</button>
+    </div>
+    <div class="table-wrap">
+      <table class="big-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>TIMESTAMP</th>
+            <th>DÉTECTION</th>
+            <th>TYPE</th>
+            <th>PROTOCOL</th>
+            <th>SERVICE</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+ 
+<section id="profils" class="page">
+ 
+  <div class="card">
+    <h3>Nouveau profil administrateur</h3>
+    <div class="form-grid">
+      <label>CODE
+        <input id="p_code" placeholder="ADM002">
+      </label>
+      <label>NOM COMPLET
+        <input id="p_nom" placeholder="Ahmed Ben Ali">
+      </label>
+      <label>USERNAME
+        <input id="p_user" placeholder="ahmed">
+      </label>
+      <label>PASSWORD
+        <input id="p_pass" type="password" placeholder="••••••••">
+      </label>
+    </div>
+    <button class="btn-primary" onclick="createProfile()">Créer le profil</button>
+  </div>
+ 
+  <div class="card" style="margin-top:20px">
+    <h3>👥 Liste des administrateurs</h3>
+    <div class="table-wrap">
+      <table class="big-table">
+        <thead>
+          <tr>
+            <th>CODE</th>
+            <th>NOM</th>
+            <th>USERNAME</th>
+            <th>CRÉÉ LE</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="profilesBody"></tbody>
+      </table>
+    </div>
+  </div>
+ 
+</section>
+ 
+</main>
+ 
+<script src="script.js"></script>
+</body>
+</html>

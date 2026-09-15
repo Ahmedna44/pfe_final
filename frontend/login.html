@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>IDS SHIELD — Connexion</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="login-body">
+<div class="login-box">
+  <div class="logo">🛡️ IDS SHIELD</div>
+  <h2>Connexion</h2>
+  <input type="text" id="username" placeholder="Username" value="admin">
+  <input type="password" id="password" placeholder="Mot de passe" value="admin123">
+  <button onclick="doLogin()">Se connecter</button>
+  <p id="loginErr" class="err"></p>
+  <p class="hint">admin/admin123</p>
+</div>
+<script>
+const API = 'http://localhost:5000';
+async function doLogin(){
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  try {
+    const r = await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d = await r.json();
+    if(r.ok){
+      localStorage.setItem('ids_user', JSON.stringify(d.user));
+      location.href='index.html';
+    } else {
+      document.getElementById('loginErr').textContent = d.error || 'Erreur';
+    }
+  } catch(e){
+    document.getElementById('loginErr').textContent = 'Backend hors ligne';
+  }
+}
+document.getElementById('password').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
+ 
